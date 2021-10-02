@@ -6,6 +6,7 @@ function Cell(id, width, height) {
   cell.style.height = height + "px";
 
   this.cell = cell;
+  this.id = id;
 
   this.status = 0;
 
