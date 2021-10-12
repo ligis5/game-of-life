@@ -4,41 +4,41 @@ const mainDiv = document.querySelector(".main");
 const buttonPlay = document.querySelector(".play");
 const buttonReset = document.querySelector(".reset");
 
-const rows = 100;
-const columns = 100;
+const rows = 150;
+const columns = 150;
 const total = rows * columns;
 
 const cellWidth = mainDiv.clientWidth / columns - 2;
 const cellHeight = mainDiv.clientHeight / rows - 2;
 
-const numberOfLifeCells = rows * 5;
+const numberOfLifeCells = rows * 10;
 
 let arrayOfEverythingStatus = [];
 let arrayOfCells = [];
-
-for (let i = 0; i < rows; i++) {
-  arrayOfEverythingStatus.push([0]);
+//Create array filled with 0 representing dead cells, and create cells.
+for (let i = 0; i < columns; i++) {
+  arrayOfEverythingStatus.push([]);
   arrayOfCells.push([]);
-  for (let j = 0; j < columns; j++) {
+  for (let j = 0; j < rows; j++) {
     arrayOfEverythingStatus[i].push(0);
-
     let cell = new Cell(j, cellWidth, cellHeight);
     mainDiv.appendChild(cell.cell);
     arrayOfCells[i].push(cell);
   }
 }
-
+// add some random 1s to array, to make some cells alive.
 for (let i = 0; i < numberOfLifeCells; i++) {
-  arrayOfEverythingStatus[Math.floor(Math.random() * rows)][
+  arrayOfEverythingStatus[Math.floor(Math.random() * columns)][
     Math.floor(Math.random() * rows)
   ] = 1;
 }
 
-let stop = true;
+const gpu = new GPU();
 
+// change cells current state to what is in array.
 const cellsStatusChange = (array) => {
-  for (let i = 0; i < rows; i++) {
-    for (let j = 0; j < columns; j++) {
+  for (let i = 0; i < columns; i++) {
+    for (let j = 0; j < rows; j++) {
       arrayOfCells[i][j].status = array[i][j];
       if (arrayOfCells[i][j].status == 1) arrayOfCells[i][j].cellLives();
       if (arrayOfCells[i][j].status == 0) arrayOfCells[i][j].cellDies();
@@ -46,74 +46,52 @@ const cellsStatusChange = (array) => {
   }
 };
 cellsStatusChange(arrayOfEverythingStatus);
-const nextArrayOfEverything = (array) => {
-  let nextArray = [];
-  for (let i = 0; i < rows; i++) {
-    nextArray.push([0]);
-    for (let j = 0; j < columns; j++) {
-      nextArray[i].push(0);
-      let leftNeigbour = array[i][j > 0 ? j - 1 : j + (columns - 1)];
-      let rightNeigbour = array[i][j < columns - 1 ? j + 1 : j - (columns - 1)];
-      let aboveNeigbour = array[i > 0 ? i - 1 : i + (rows - 1)][j];
-      let belowNeigbour = array[i < rows - 1 ? i + 1 : i - (rows - 1)][j];
-      let aboveLeftNeigbour =
-        array[i > 0 ? i - 1 : i + (rows - 1)][j > 0 ? j - 1 : j + columns - 1];
-      let aboveRightNeigbour =
-        array[i > 0 ? i - 1 : i + (rows - 1)][
-          j < columns - 1 ? j + 1 : j - (columns - 1)
-        ];
-      let belowLeftNeigbour =
-        array[i < rows - 1 ? i + 1 : i - (rows - 1)][
-          j > 0 ? j - 1 : j + (columns - 1)
-        ];
-      let belowRightNeigbour =
-        array[i < rows - 1 ? i + 1 : i - (rows - 1)][
-          j < columns - 1 ? j + 1 : j - (columns - 1)
-        ];
 
-      let neighbours = [
-        leftNeigbour,
-        rightNeigbour,
-        aboveNeigbour,
-        belowNeigbour,
-        aboveLeftNeigbour,
-        aboveRightNeigbour,
-        belowLeftNeigbour,
-        belowRightNeigbour,
-      ];
+const nextArrayOfEverything = gpu
+  .createKernel(function (array, rows, columns) {
+    let nextValue = 0;
+    for (let i = 0; i < columns; i++) {
+      for (let j = 0; j < rows; j++) {
+        let x = this.thread.x;
+        let y = this.thread.y;
+        let neighbours =
+          array[y][x > 0 ? x - 1 : x + (rows - 1)] +
+          array[y][x < rows - 1 ? x + 1 : x - (rows - 1)] +
+          array[y > 0 ? y - 1 : y + (columns - 1)][x] +
+          array[y < columns - 1 ? y + 1 : y - (columns - 1)][x] +
+          array[y > 0 ? y - 1 : y + (columns - 1)][
+            x > 0 ? x - 1 : x + rows - 1
+          ] +
+          array[y > 0 ? y - 1 : y + (columns - 1)][
+            x < rows - 1 ? x + 1 : x - (rows - 1)
+          ] +
+          array[y < columns - 1 ? y + 1 : y - (columns - 1)][
+            x > 0 ? x - 1 : x + (rows - 1)
+          ] +
+          array[y < columns - 1 ? y + 1 : y - (columns - 1)][
+            x < rows - 1 ? x + 1 : x - (rows - 1)
+          ];
 
-      let amountOfLivingNeighbour = 0;
-      neighbours.forEach((n) => {
-        if (n == 1) {
-          amountOfLivingNeighbour++;
+        if (
+          (neighbours == 2 && array[y][x] == 1) ||
+          (neighbours == 3 && array[y][x] == 1) ||
+          (array[y][x] == 0 && neighbours == 3)
+        ) {
+          nextValue = 1;
         }
-      });
-
-      let checkIf1 = amountOfLivingNeighbour == 2 && array[i][j] == 1;
-      let checkIf2 = amountOfLivingNeighbour == 3 && array[i][j] == 1;
-      let checkIf3 = array[i][j] == 0 && amountOfLivingNeighbour == 3;
-      let checkIf4 = amountOfLivingNeighbour < 2 && array[i][j] == 1;
-      let checkIf5 = amountOfLivingNeighbour > 3 && array[i][j] == 1;
-      if (checkIf1 || checkIf2) {
-        nextArray[i][j] = 1;
-      }
-      if (checkIf4 || checkIf5) {
-        nextArray[i][j] = 0;
-      }
-      if (checkIf3) {
-        nextArray[i][j] = 1;
-        arrayOfCells[i][j].red += 10;
-        // arrayOfCells[i][j].red < 255 ? 10 : arrayOfCells[i][j].cellDies();
-      }
-      if (!checkIf1 && !checkIf2 && !checkIf3 && !checkIf4 && !checkIf5) {
-        nextArray[i][j] = 0;
+        if (
+          (neighbours < 2 && array[y][x] == 0) ||
+          (neighbours > 3 && array[y][x] == 0) ||
+          (neighbours < 2 && array[y][x] == 1) ||
+          (neighbours > 3 && array[y][x] == 1)
+        ) {
+          nextValue = 0;
+        }
       }
     }
-  }
-  arrayOfEverythingStatus = nextArray;
-  return nextArray;
-};
-let time;
+    return nextValue;
+  })
+  .setOutput([rows, columns]);
 
 const autoGrid = () => {
   document.getElementById("main").style.gridTemplateRows = `repeat(
@@ -124,6 +102,8 @@ const autoGrid = () => {
 };
 autoGrid();
 
+let time;
+let stop = true;
 buttonPlay.addEventListener("click", () => {
   stop = stop == true ? false : true;
   let button = document.getElementById("play");
@@ -139,19 +119,26 @@ buttonPlay.addEventListener("click", () => {
   }
   if (!stop) {
     time = setInterval(() => {
-      cellsStatusChange(nextArrayOfEverything(arrayOfEverythingStatus));
+      // console.time("time");
+      arrayOfEverythingStatus = nextArrayOfEverything(
+        arrayOfEverythingStatus,
+        rows,
+        columns
+      );
+      cellsStatusChange(arrayOfEverythingStatus);
+      // console.timeEnd("time");
     }, 1000 / 10);
   }
 });
 buttonReset.addEventListener("click", () => {
   if (stop) {
-    for (let i = 0; i < rows; i++) {
+    for (let i = 0; i < columns; i++) {
       for (let j = 0; j < rows; j++) {
         arrayOfEverythingStatus[i][j] = 0;
       }
     }
     for (let i = 0; i < numberOfLifeCells; i++) {
-      arrayOfEverythingStatus[Math.floor(Math.random() * rows)][
+      arrayOfEverythingStatus[Math.floor(Math.random() * columns)][
         Math.floor(Math.random() * rows)
       ] = 1;
     }
