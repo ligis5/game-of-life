@@ -34,6 +34,19 @@ function Cell(columns, rows, width, height) {
       this.changeStatusOnClick();
     }
   });
+  document.addEventListener("keydown", (e) => {
+    if (e.key == "Shift") {
+      this.cell.addEventListener("mouseover", () => {
+        if (this.status == 0) {
+          this.cellLives();
+          this.changeStatusOnClick();
+        } else {
+          this.cellDies();
+          this.changeStatusOnClick();
+        }
+      });
+    }
+  });
 }
 
 export default Cell;
