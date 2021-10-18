@@ -5,13 +5,53 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="stylesheet" href="./style.css" />
-
+    <script src="./node_modules/@fortawesome/fontawesome-free/js/all.min.js"></script>
     <title>Game Of Life</title>
   </head>
   <body>
     <div class="main" id="main"></div>
-    <button class="play" , id="play">Play/Stop</button>
-    <button class="reset" id="reset">Reset</button>
+    <div class="buttons">
+      <button class="play" , id="play">
+        <i id="playIcon" class="fas fa-play"></i>
+      </button>
+      <button class="reset" id="reset">
+        <i id="resetIcon" class="fas fa-stop"></i>
+      </button>
+      <label id="rowsAndColumns" for="rowsAndColumns">Rows and Columns</label>
+      <input
+        id="amountOfRC"
+        class="amountOfRC"
+        type="number"
+        value="0"
+        min="0"
+        max="150"
+        step="10"
+      />
+      <button class="confirmRC" id="confirmRC">
+        <i id="confirmIcon" class="far fa-check-circle"></i>
+      </button>
+      <label id="aliveCellsLabel" for="aliveCells">Living Cells</label>
+      <input
+        id="aliveCells"
+        class="aliveCells"
+        type="number"
+        value="0"
+        min="0"
+      />
+      <button class="confirm" id="confirm">
+        <i id="confirmIcon" class="far fa-check-circle"></i>
+      </button>
+      <label id="fpsLabel" for="fpsLabel">Frames per second</label>
+      <input
+        id="fpsInput"
+        class="fpsInput"
+        type="number"
+        value="5"
+        min="1"
+        max="60"
+        step="1"
+      />
+    </div>
     <script type="module" src="./script.js"></script>
   </body>
 </html>
