@@ -3,35 +3,49 @@ import Cell from "./cell.js";
 const mainDiv = document.querySelector(".main");
 const buttonPlay = document.querySelector(".play");
 const buttonReset = document.querySelector(".reset");
+const inputAliveCells = document.getElementById("aliveCells");
+const confirmButton = document.getElementById("confirm");
+const inputRowsCols = document.getElementById("amountOfRC");
+const confirmRowsCols = document.getElementById("confirmRC");
+const inputFps = document.getElementById("fpsInput");
 
-const rows = 100;
-const columns = 100;
+let rows = 50;
+let columns = 50;
 const total = rows * columns;
+inputRowsCols.value = rows;
 
-const cellWidth = mainDiv.clientWidth / columns - 2;
-const cellHeight = mainDiv.clientHeight / rows - 2;
+inputAliveCells.setAttribute("max", total);
+inputAliveCells.setAttribute("step", rows / 10 < 1 ? 1 : rows / 10);
 
-const numberOfLifeCells = 0;
+let cellWidth = mainDiv.clientWidth / columns - 2;
+let cellHeight = mainDiv.clientHeight / rows - 2;
 
-let arrayOfEverythingStatus = [];
-let arrayOfCells = [];
+let numberOfLifeCells = inputAliveCells.value;
+
+let arrayOfEverythingStatus;
+let arrayOfCells;
 
 //Create array filled with 0 representing dead cells, and create cells.
-for (let i = 0; i < columns; i++) {
-  arrayOfEverythingStatus.push([]);
-  arrayOfCells.push([]);
-  for (let j = 0; j < rows; j++) {
-    arrayOfEverythingStatus[i].push(0);
-    let cell = new Cell(i, j, cellWidth, cellHeight);
-    mainDiv.appendChild(cell.cell);
-    arrayOfCells[i][j] = cell;
-    // if cell is clicked its state will change.
-    cell.changeStatusOnClick = () => {
-      arrayOfEverythingStatus[i][j] =
-        arrayOfEverythingStatus[i][j] == 0 ? 1 : 0;
-    };
+const fillArrayCreateCells = () => {
+  arrayOfCells = [];
+  arrayOfEverythingStatus = [];
+  for (let i = 0; i < columns; i++) {
+    arrayOfEverythingStatus.push([]);
+    arrayOfCells.push([]);
+    for (let j = 0; j < rows; j++) {
+      arrayOfEverythingStatus[i].push(0);
+      let cell = new Cell(i, j, cellWidth, cellHeight);
+      mainDiv.appendChild(cell.cell);
+      arrayOfCells[i][j] = cell;
+      // if cell is clicked its state will change.
+      cell.changeStatusOnClick = () => {
+        arrayOfEverythingStatus[i][j] =
+          arrayOfEverythingStatus[i][j] == 0 ? 1 : 0;
+      };
+    }
   }
-}
+};
+fillArrayCreateCells();
 
 const cellNeighbours = () => {
   for (let i = 0; i < columns; i++) {
@@ -64,11 +78,13 @@ const cellNeighbours = () => {
 cellNeighbours();
 
 // add some random 1s to array, to make some cells alive.
-for (let i = 0; i < numberOfLifeCells; i++) {
-  arrayOfEverythingStatus[Math.floor(Math.random() * columns)][
-    Math.floor(Math.random() * rows)
-  ] = 1;
-}
+const cellsLive = () => {
+  for (let i = 0; i < numberOfLifeCells; i++) {
+    arrayOfEverythingStatus[Math.floor(Math.random() * columns)][
+      Math.floor(Math.random() * rows)
+    ] = 1;
+  }
+};
 
 // change cells current state to what is in array.
 const cellsStatusChange = (array) => {
@@ -134,21 +150,42 @@ const explodingCell = (cell) => {
 };
 
 const autoGrid = () => {
+  cellWidth = mainDiv.clientWidth / columns - 2;
+  cellHeight = mainDiv.clientHeight / rows - 2;
   document.getElementById("main").style.gridTemplateRows = `repeat(
         (${rows}, ${cellHeight}px)`;
   document.getElementById(
     "main"
   ).style.gridTemplateColumns = `repeat(${columns}, ${cellWidth}px)`;
+  for (let i = 0; i < columns; i++) {
+    for (let j = 0; j < rows; j++) {
+      arrayOfCells[i][j].resize(cellWidth, cellHeight);
+    }
+  }
 };
+
 autoGrid();
 
+const resetArrays = () => {
+  let allCellDivs = document.querySelectorAll(".cell");
+  for (let i = 0; i < allCellDivs.length; i++) {
+    allCellDivs[i].parentNode.removeChild(allCellDivs[i]);
+  }
+  fillArrayCreateCells();
+  cellsLive();
+  cellNeighbours();
+  cellsStatusChange(arrayOfEverythingStatus);
+  numberOfLifeCells = 0;
+};
+// Game loop
 let fps = 5;
 let now;
 let then = Date.now();
-let interval = 1000 / fps;
 let delta;
 
 const gameLoop = () => {
+  fps = inputFps.value;
+  let interval = 1000 / fps;
   if (!stop) window.requestAnimationFrame(gameLoop);
   else window.cancelAnimationFrame(gameLoop);
 
@@ -162,35 +199,49 @@ const gameLoop = () => {
     cellsStatusChange(arrayOfEverythingStatus);
   }
 };
-
+//Game loop end
+// Button functionality
 let stop = true;
 buttonPlay.addEventListener("click", () => {
+  let playImg = document.getElementById("playIcon");
   stop = stop == true ? false : true;
   let button = document.getElementById("play");
   let button2 = document.getElementById("reset");
   if (stop) {
+    playImg.setAttribute("class", "fas fa-play");
+    playImg.style.color = "aqua";
     gameLoop();
     button.style.color = "aqua";
     button2.style.color = "aqua";
   }
   if (!stop) {
+    playImg.setAttribute("class", "fas fa-pause");
+    playImg.style.color = "red";
     gameLoop();
     button.style.color = "black";
     button2.style.color = "black";
   }
 });
 buttonReset.addEventListener("click", () => {
+  if (stop) resetArrays();
+});
+confirmButton.addEventListener("click", () => {
   if (stop) {
-    for (let i = 0; i < columns; i++) {
-      for (let j = 0; j < rows; j++) {
-        arrayOfEverythingStatus[i][j] = 0;
-      }
-    }
-    for (let i = 0; i < numberOfLifeCells; i++) {
-      arrayOfEverythingStatus[Math.floor(Math.random() * columns)][
-        Math.floor(Math.random() * rows)
-      ] = 1;
-    }
-    cellsStatusChange(arrayOfEverythingStatus);
+    numberOfLifeCells =
+      inputAliveCells.value < total ? inputAliveCells.value : total;
+    resetArrays();
   }
+});
+confirmRowsCols.addEventListener("click", () => {
+  if (stop) {
+    rows = inputRowsCols.value < 150 ? inputRowsCols.value : 150;
+    columns = inputRowsCols.value < 150 ? inputRowsCols.value : 150;
+
+    resetArrays();
+    autoGrid();
+  }
+});
+// Button functionality end
+window.addEventListener("resize", () => {
+  autoGrid();
 });
