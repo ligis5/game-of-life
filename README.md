@@ -11,6 +11,8 @@ Frames per second can be changed while game runs, minimum is 1, maximum is 60.
 
 Cells can be clicked, changing its state, alive/dead, so patterns can be created when paused and then game ran to see what patterns will emerge.
 
+Click Shift once to start drawing cells, to create patterns easier, click Shift again to stop.
+
 Button icons are from Font Awesome.
 
 
