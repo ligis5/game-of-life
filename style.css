@@ -1,59 +1,67 @@
-body {
-  width: 100vw;
-  height: 100vh;
-  background-color: rgb(40, 51, 153);
-}
 * {
   margin: 0;
   padding: 0;
 }
 
+body {
+  width: 100vw;
+  height: 100vh;
+  background-color: rgb(40, 51, 153);
+  display: flex;
+}
+
 .main {
-  width: calc(100% - 120px);
+  width: 100%;
   height: 99%;
   display: grid;
-
   background-color: rgb(40, 51, 153);
+  justify-content: center;
 }
 .buttons {
-  width: 180px;
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  display: flex;
-  flex-flow: row wrap;
-  height: auto;
-  justify-content: space-evenly;
-  align-content: space-between;
+  height: max-content;
+  margin-right: 10px;
+  margin-top: 10px;
 }
-.play {
-  width: 50px;
-  height: 40px;
-  font-size: 25px;
+
+.play-pause {
+  display: flex;
+  justify-content: space-around;
+}
+.rows-div,
+.alive-div,
+.fps-div {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+}
+
+.play,
+.reset {
+  width: 4vw;
+  min-width: none;
+  height: 5vh;
+  font-size: 2vw;
   background-color: rgb(62, 18, 104);
   color: aqua;
 }
 
-.reset {
-  width: 50px;
-  height: 40px;
-  font-size: larger;
-  background-color: rgb(62, 18, 104);
-  color: aqua;
-}
 #resetIcon {
-  font-size: 25px;
+  font-size: 2vw;
 }
 .aliveCells,
 .amountOfRC,
 .fpsInput {
   background-color: rgb(62, 18, 104);
   color: aqua;
-  width: 100px;
-  height: 20px;
+  width: 5vw;
+  min-width: 50px;
+  height: 2.5vh;
   font-weight: 700;
-  font-size: larger;
-  justify-self: flex-start;
+  font-size: 1.5vh;
+  justify-self: self-end;
+}
+.fpsInput {
+  grid-column-start: span 2;
+  justify-self: center;
 }
 #aliveCellsLabel,
 #rowsAndColumns,
@@ -61,12 +69,15 @@ body {
   margin-top: 15px;
   color: aqua;
   font-weight: 700;
-  font-size: larger;
+  font-size: 2vh;
+  grid-column-start: span 2;
+  text-align: center;
 }
 .confirm,
 .confirmRC {
   height: 25px;
-  width: 50px;
+  max-width: 4vw;
+  min-width: 28px;
   background: rgb(62, 18, 104);
 }
 #confirmIcon {
@@ -76,6 +87,33 @@ body {
 
 .cell {
   border: 1px solid rgba(0, 0, 0, 0.219);
-  /* width: 40px;
-  height: 40px; */
+}
+@media only screen and (max-width: 1000px) {
+  body {
+    flex-direction: column;
+  }
+  .buttons {
+    height: 100px;
+    display: flex;
+    margin-left: 5vw;
+    margin-top: 5px;
+    justify-content: space-evenly;
+  }
+  .play-pause {
+    display: grid;
+    align-content: space-evenly;
+  }
+  .play {
+    height: 5vw;
+    min-height: 25px;
+    min-width: 25px;
+  }
+  .reset {
+    height: 5vw;
+    min-height: 25px;
+    min-width: 25px;
+  }
+  .main {
+    height: calc(99% - 100px);
+  }
 }
